@@ -15,6 +15,8 @@ extension Event {
 class ChildControllerTests: XCTestCase {
     static let allTests = [
         ("testAddChild", testAddChild),
+        ("testAddChildWithNoVendorId", testAddChildWithNoVendorId),
+        ("testAddChildWithDifferentVendorIdInBody", testAddChildWithDifferentVendorIdInBody),
         ("testRemoveChild", testRemoveChild),
         ("testGetParent", testGetParent),
         ("testGetChild", testGetChild),
@@ -43,7 +45,39 @@ class ChildControllerTests: XCTestCase {
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .contentID, value: "1234")
-        let response = try app.sendRequest(to: "\(Vendor.name.lowercased())/\(vendor.id!)/\(Event.name)/add", method: .PUT, headers: headers, body: event)
+        let response = try app.sendRequest(to: "\(Vendor.name.lowercased())/\(vendor.id!)/\(Event.name.lowercased())/add", method: .PUT, headers: headers, body: event)
+        XCTAssertEqual(response.http.status.code, 200)
+        
+        let fetch = try response.content.syncDecode(Event.self)
+        XCTAssertNotNil(fetch.id)
+        XCTAssertNotNil(fetch)
+        XCTAssertNotNil(try vendor.events.query(on: conn).filter(\.id == fetch.id!).first().wait())
+    }
+    
+    func testAddChildWithNoVendorId() throws {
+        let vendor = try Vendor.create(on: conn)
+        let event = Event()
+        event.title = "Test Event"
+        event.description = "description for tests"
+        
+        var headers = HTTPHeaders()
+        headers.replaceOrAdd(name: .contentID, value: "1234")
+        let response = try app.sendRequest(to: "\(Vendor.name.lowercased())/\(vendor.id!)/\(Event.name.lowercased())/add", method: .PUT, headers: headers, body: event)
+        XCTAssertEqual(response.http.status.code, 200)
+        
+        let fetch = try response.content.syncDecode(Event.self)
+        XCTAssertNotNil(fetch.id)
+        XCTAssertNotNil(fetch)
+        XCTAssertNotNil(try vendor.events.query(on: conn).filter(\.id == fetch.id!).first().wait())
+    }
+    
+    func testAddChildWithDifferentVendorIdInBody() throws {
+        let vendor = try Vendor.create(on: conn)
+        let event = Event(vendorID: 9876543221)
+        
+        var headers = HTTPHeaders()
+        headers.replaceOrAdd(name: .contentID, value: "1234")
+        let response = try app.sendRequest(to: "\(Vendor.name.lowercased())/\(vendor.id!)/\(Event.name.lowercased())/add", method: .PUT, headers: headers, body: event)
         XCTAssertEqual(response.http.status.code, 200)
         
         let fetch = try response.content.syncDecode(Event.self)
@@ -58,7 +92,7 @@ class ChildControllerTests: XCTestCase {
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .contentID, value: "1234")
-        let response = try app.sendRequest(to: "\(Vendor.name.lowercased())/\(vendor.id!)/\(Event.name)/\(event.id!)/remove", method: .DELETE, headers: headers)
+        let response = try app.sendRequest(to: "\(Vendor.name.lowercased())/\(vendor.id!)/\(Event.name.lowercased())/\(event.id!)/remove", method: .DELETE, headers: headers)
         XCTAssertEqual(response.http.status.code, 204)
     }
     
@@ -68,7 +102,7 @@ class ChildControllerTests: XCTestCase {
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .contentID, value: "1234")
-        let response = try app.sendRequest(to: "\(Vendor.name.lowercased())/\(Event.name)/\(event.id!)/parent", method: .GET, headers: headers)
+        let response = try app.sendRequest(to: "\(Vendor.name.lowercased())/\(Event.name.lowercased())/\(event.id!)/parent", method: .GET, headers: headers)
         XCTAssertEqual(response.http.status.code, 200)
         
         let fetch = try response.content.syncDecode(Vendor.self)
@@ -83,7 +117,7 @@ class ChildControllerTests: XCTestCase {
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .contentID, value: "1234")
-        let response = try app.sendRequest(to: "\(Vendor.name.lowercased())/\(vendor.id!)/\(Event.name)/\(event.id!)", method: .GET, headers: headers)
+        let response = try app.sendRequest(to: "\(Vendor.name.lowercased())/\(vendor.id!)/\(Event.name.lowercased())/\(event.id!)", method: .GET, headers: headers)
         XCTAssertEqual(response.http.status.code, 200)
         
         let fetch = try response.content.syncDecode(Event.self)
@@ -99,7 +133,7 @@ class ChildControllerTests: XCTestCase {
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .contentID, value: "1234")
-        let response = try app.sendRequest(to: "\(Vendor.name.lowercased())/\(vendor.id!)/\(Event.name)/children", method: .GET, headers: headers)
+        let response = try app.sendRequest(to: "\(Vendor.name.lowercased())/\(vendor.id!)/\(Event.name.lowercased())/children", method: .GET, headers: headers)
         XCTAssertEqual(response.http.status.code, 200)
         
         let fetch = try response.content.syncDecode([Event].self)
@@ -115,7 +149,7 @@ class ChildControllerTests: XCTestCase {
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .contentID, value: "1234")
-        let url = "\(Vendor.name.lowercased())/\(vendor.id!)/\(Event.name)/children?offset[length]=12&offset[index]=18"
+        let url = "\(Vendor.name.lowercased())/\(vendor.id!)/\(Event.name.lowercased())/children?offset[length]=12&offset[index]=18"
         let response = try app.sendRequest(to: url, method: .GET, headers: headers)
         XCTAssertEqual(response.http.status.code, 200)
         
@@ -132,7 +166,7 @@ class ChildControllerTests: XCTestCase {
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .contentID, value: "1234")
-        let url = "\(Vendor.name.lowercased())/\(vendor.id!)/\(Event.name)/children?where[1][key]=title&where[1][operator]==&where[1][value]=Test%20Name"
+        let url = "\(Vendor.name.lowercased())/\(vendor.id!)/\(Event.name.lowercased())/children?where[1][key]=title&where[1][operator]==&where[1][value]=Test%20Name"
 
         let response = try app.sendRequest(to: url, method: .GET, headers: headers)
         XCTAssertEqual(response.http.status.code, 200)

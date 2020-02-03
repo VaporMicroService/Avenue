@@ -3,10 +3,10 @@ import FluentPostgreSQL
 import Vapor
 
 public struct ChildController<Parent: VaporModel, Child: VaporModel> {
-    var keypath: KeyPath<Child, Int>
+    var keypath: ReferenceWritableKeyPath<Child, Int?>
     
     // MARK: Boot
-    public init(router: Router, keypath: KeyPath<Child, Int>) {
+    public init(router: Router, keypath: ReferenceWritableKeyPath<Child, Int?>) {
         self.keypath = keypath
         print("🚀🚀🚀 Adding routes for Prent: \(Parent.name) and Child: \(Child.name)")
         let parentName = Parent.name.lowercased()
@@ -27,6 +27,7 @@ public struct ChildController<Parent: VaporModel, Child: VaporModel> {
             guard parent.ownerID?.contains(ownerId) ?? false else { throw Abort(.forbidden) }
             return try req.content.decode(Child.self, using: decoderJSON).flatMap { model in
                 var newModel = model
+                newModel[keyPath: self.keypath] = try parent.requireID()
                 newModel.assignOwner(ownerId)
                 return newModel.save(on: req)
             }
@@ -36,7 +37,7 @@ public struct ChildController<Parent: VaporModel, Child: VaporModel> {
     func removeChild(_ req: Request) throws -> Future<HTTPResponseStatus> {
         guard let ownerId = req.http.headers.firstValue(name: .contentID) else { throw Abort(.unauthorized) }
         return flatMap(try req.parameters.next(Parent.self) as! EventLoopFuture<Parent>, try req.parameters.next(Child.self) as! EventLoopFuture<Child>) { parent, child -> Future<HTTPResponseStatus> in
-            let acctualParent: Fluent.Parent<Child, Parent> = child.parent(self.keypath)
+            guard let acctualParent: Fluent.Parent<Child, Parent> = child.parent(self.keypath) else { throw Abort(.unprocessableEntity) }
             guard try parent.requireID() == acctualParent.parentID else { throw Abort(.badRequest) }
             guard parent.ownerID?.contains(ownerId) ?? false else { throw Abort(.forbidden) }
             return child.delete(on: req).transform(to: HTTPStatus.noContent)
@@ -51,7 +52,7 @@ public struct ChildController<Parent: VaporModel, Child: VaporModel> {
     
     func getChild(_ req: Request) throws -> Future<Child> {
         return map(try req.parameters.next(Parent.self) as! EventLoopFuture<Parent>, try req.parameters.next(Child.self) as! EventLoopFuture<Child>) { parent, child -> Child in
-            let acctualParent: Fluent.Parent<Child, Parent> = child.parent(self.keypath)
+            guard let acctualParent: Fluent.Parent<Child, Parent> = child.parent(self.keypath) else { throw Abort(.unprocessableEntity) }
             guard try parent.requireID() == acctualParent.parentID else { throw Abort(.badRequest) }
             return child
         }
@@ -59,7 +60,7 @@ public struct ChildController<Parent: VaporModel, Child: VaporModel> {
     
     func getParent(_ req: Request) throws -> Future<Parent> {
         return (try req.parameters.next(Child.self) as! EventLoopFuture<Child>).flatMap { child -> EventLoopFuture<Parent> in
-            let parent: Fluent.Parent<Child, Parent> = child.parent(self.keypath)
+            guard let parent: Fluent.Parent<Child, Parent> = child.parent(self.keypath) else { throw Abort(.unprocessableEntity) }
             return parent.get(on: req)
         }
     }

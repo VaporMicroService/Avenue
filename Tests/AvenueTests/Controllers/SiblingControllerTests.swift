@@ -18,6 +18,7 @@ extension Product {
         let product = Product(vendorID: vendorID)
         product.name = "Test Product"
         product.description = "None existend item"
+        product.alcohol = 0.7
         return try product.save(on: connection).wait()
     }
 }
@@ -50,7 +51,7 @@ class SiblingControllerTests: XCTestCase {
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .contentID, value: "1234")
-        let response = try app.sendRequest(to: "\(List.name.lowercased())/\(list.id!)/\(Product.name)/\(product.id!)/attach", method: .POST, headers: headers)
+        let response = try app.sendRequest(to: "\(List.name.lowercased())/\(list.id!)/\(Product.name.lowercased())/\(product.id!)/attach", method: .POST, headers: headers)
         XCTAssertEqual(response.http.status.code, 201)
         print(try ListProduct.query(on: conn).all().wait())
         XCTAssertNotNil(try ListProduct.query(on: conn).filter(\ListProduct.productID ==  product.requireID()).filter(\ListProduct.listID ==  list.requireID()).first().wait())
@@ -68,7 +69,7 @@ class SiblingControllerTests: XCTestCase {
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .contentID, value: "1234")
-        let response = try app.sendRequest(to: "\(List.name.lowercased())/\(list.id!)/\(Product.name)/\(product.id!)/detach", method: .DELETE, headers: headers)
+        let response = try app.sendRequest(to: "\(List.name.lowercased())/\(list.id!)/\(Product.name.lowercased())/\(product.id!)/detach", method: .DELETE, headers: headers)
         XCTAssertEqual(response.http.status.code, 200)
         XCTAssertNil(try ListProduct.query(on: conn).filter(\ListProduct.productID ==  product.requireID()).filter(\ListProduct.listID ==  list.requireID()).first().wait())
     }
@@ -85,7 +86,7 @@ class SiblingControllerTests: XCTestCase {
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .contentID, value: "1234")
-        let response = try app.sendRequest(to: "\(List.name.lowercased())/\(list.id!)/siblings/\(Product.name)", method: .GET, headers: headers)
+        let response = try app.sendRequest(to: "\(List.name.lowercased())/\(list.id!)/siblings/\(Product.name.lowercased())", method: .GET, headers: headers)
         XCTAssertEqual(response.http.status.code, 200)
         let fetch = try response.content.syncDecode([Product].self)
         XCTAssert(fetch.count == 50)
@@ -104,7 +105,7 @@ class SiblingControllerTests: XCTestCase {
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .contentID, value: "1234")
-        let response = try app.sendRequest(to: "\(Product.name.lowercased())/\(product.id!)/siblings/\(List.name)", method: .GET, headers: headers)
+        let response = try app.sendRequest(to: "\(Product.name.lowercased())/\(product.id!)/siblings/\(List.name.lowercased())", method: .GET, headers: headers)
         XCTAssertEqual(response.http.status.code, 200)
         let fetch = try response.content.syncDecode([List].self)
         XCTAssert(fetch.count == 25)

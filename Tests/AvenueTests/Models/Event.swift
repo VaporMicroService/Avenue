@@ -17,7 +17,7 @@ final class Event: VaporModel {
     var startTime: Date?
     var endTime: Date?
     
-    init(id: Int? = nil, vendorID: Vendor.ID) {
+    init(id: Int? = nil, vendorID: Vendor.ID? = nil) {
         self.id = id
         self.vendorID = vendorID
     }
@@ -31,7 +31,7 @@ final class Event: VaporModel {
 }
 
 extension Event {
-    var vendor: Parent<Event, Vendor> {
+    var vendor: Parent<Event, Vendor>? {
         return parent(\.vendorID)
     }
 }
