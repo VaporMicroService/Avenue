@@ -11,12 +11,14 @@ public struct SiblingController<LHS: VaporSibling, RHS: VaporModel, Pivot: Vapor
         self.keypathLeft = keypathLeft
         self.keypathRight = keypathRight
         print("🚀🚀🚀 Adding routes for siblings LHS: \(LHS.name) and RHS: \(RHS.name)")
-        let route = router.grouped(LHS.name.lowercased())
-        route.post(LHS.parameter, "\(RHS.name)", RHS.parameter, "attach", use: add)
-        route.delete(LHS.parameter, "\(RHS.name)", RHS.parameter, "detach", use: remove)
-        route.get(LHS.parameter, "siblings", "\(RHS.name)", use: getAllLHS)
-        let routeRHS = router.grouped(RHS.name.lowercased())
-        routeRHS.get(RHS.parameter, "siblings", "\(LHS.name)", use: getAllRHS)
+        let lhsName = LHS.name.lowercased()
+        let rhsName = RHS.name.lowercased()
+        let route = router.grouped(lhsName)
+        route.post(LHS.parameter, "\(rhsName)", RHS.parameter, "attach", use: add)
+        route.delete(LHS.parameter, "\(rhsName)", RHS.parameter, "detach", use: remove)
+        route.get(LHS.parameter, "siblings", "\(rhsName)", use: getAllLHS)
+        let routeRHS = router.grouped(rhsName)
+        routeRHS.get(RHS.parameter, "siblings", "\(lhsName)", use: getAllRHS)
     }
     
     

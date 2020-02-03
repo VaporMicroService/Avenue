@@ -9,12 +9,14 @@ public struct ChildController<Parent: VaporModel, Child: VaporModel> {
     public init(router: Router, keypath: KeyPath<Child, Int>) {
         self.keypath = keypath
         print("🚀🚀🚀 Adding routes for Prent: \(Parent.name) and Child: \(Child.name)")
-        let route = router.grouped(Parent.name.lowercased())
-        route.put(Parent.parameter, "\(Child.name)", "add", use: addChild)
-        route.delete(Parent.parameter, "\(Child.name)", Child.parameter, "remove", use: removeChild)
-        route.get(Parent.parameter, "\(Child.name)", "children", use: getAllChildren)
-        route.get(Parent.parameter, "\(Child.name)", Child.parameter, use: getChild)
-        route.get("\(Child.name)", Child.parameter, "parent", use: getParent)
+        let parentName = Parent.name.lowercased()
+        let childName = Child.name.lowercased()
+        let route = router.grouped(parentName)
+        route.put(Parent.parameter, "\(childName)", "add", use: addChild)
+        route.delete(Parent.parameter, "\(childName)", Child.parameter, "remove", use: removeChild)
+        route.get(Parent.parameter, "\(childName)", "children", use: getAllChildren)
+        route.get(Parent.parameter, "\(childName)", Child.parameter, use: getChild)
+        route.get("\(childName)", Child.parameter, "parent", use: getParent)
     }
     
     
