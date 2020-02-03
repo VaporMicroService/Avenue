@@ -27,7 +27,7 @@ _ = MainController<Model>(router: router)
 
 We are using here generic `MainController` which requires your model as generic constrain and router to which routes should be populated.
 
-####Child
+#### Child
 
 Adding Parent-Child relation ship routes works in similar way. We specify parent model type which is `Vendor` in following example and child which is `Product`. Moreover, next to the router instance we need to pass keypath for child-parent link so our generic controller can create corresponding queries. 
 
@@ -35,7 +35,7 @@ Adding Parent-Child relation ship routes works in similar way. We specify parent
 _ = ChildController<Vendor, Product>(router: router, keypath: \Product.vendorID)
 ```
 
-####Sibling
+#### Sibling
 
 Final controller is `SiblingController`. Responsible for population of routes in regards of sibling relationship. 
 Here we will need sibling models such as `List` and `Product` in following example and Pivot table model which is `ListProduct`. In swift keypaths are static that's why relation controllers require them to be passed alone with router. Thanks to that we can query objects on both sides of relation. 
