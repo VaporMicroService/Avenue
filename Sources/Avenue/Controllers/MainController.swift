@@ -25,7 +25,7 @@ public struct MainController<Model: VaporModel> {
     }
     
     func getAllByOwnerHandler(_ req: Request) throws -> Future<[Model]> {
-        guard let ownerId = req.http.headers.firstValue(name: .contentID) else { throw Abort(.badRequest) }
+        guard let ownerId = req.http.headers.firstValue(name: .contentID) else { throw Abort(.unauthorized) }
         let key: KeyPath = \Model.ownerID
         
         return Model.applyQuery(req, Model.query(on: req)
